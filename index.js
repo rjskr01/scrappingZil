@@ -1,24 +1,20 @@
 const express = require('express');
 const cheerio = require('cheerio');
-// const axios = require('axios');
-// // const https = require('node:https');
-// var https = require('https');
+
+
 var request = require('request');
 
-// process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
-
-var agents = [];
-var final = [];
+let agents = [];
+const BASE_URI = 'https://www.zillow.com';
 
 const app = express();
+
 app.get('/', (req, res) => {
     res.send("hello")
 })
 app.get('/getData', (req, originalres) => {
-    // res.send("hello")
 
-
-    var url = 'https://zillow.com/professionals/api/v2/search/?profileType=2&page=1&locationText=Henderson%20NV&language=English';
+    var url = `${BASE_URI}/professionals/api/v2/search/?profileType=2&page=1&locationText=Henderson%20NV&language=English`;
 
     request.get({
         url: url,
@@ -30,11 +26,6 @@ app.get('/getData', (req, originalres) => {
         } else if (res.statusCode !== 200) {
             console.log('Status:', res.statusCode);
         } else {
-            // data is already parsed as JSON:
-            // console.log(data);
-            // return originalres.status(200).json({
-            //             message: data
-            //         })
             originalres.send("received");
             agents = data.results.professionals;
 
@@ -43,9 +34,7 @@ app.get('/getData', (req, originalres) => {
             for (var i=0; i< agents.length; i++){
                 var group = {};
                 group.name = agents[i].fullName;
-
                 console.log('https://www.zillow.com/' + agents[i].profileLink);
-
             }
 
             request.get({
@@ -59,14 +48,10 @@ app.get('/getData', (req, originalres) => {
                     console.log('Status:', res.statusCode);
                 } else {
                     // data is already parsed as JSON:
-                    console.log(data);
                     const $ = cheerio.load(data);
-                    console.log($);
                     const sectionTag = $('section[class*="CardSection"]');
-                   
-                    const searchString = 'StyledTextButton';
                     const anchorTags = sectionTag.find('a');
-                    let count = 0;
+                    
                     anchorTags.each((index, element) => {
                         const href = $(element).attr('href');
                         if($(element)[0].nextSibling && $(element)[0].nextSibling.children) {
@@ -74,12 +59,26 @@ app.get('/getData', (req, originalres) => {
 
                             if(siblingsLength === 3 || siblingsLength === 2) {
                                 console.log(href);
-                                count++;
+                                const  URL = `https://www.zillow.com${href}`;
+                                request.get({
+                                    url: URL,
+                                    json: true,
+                                    headers: { 'User-Agent': 'Cielo' +  Date.now() , 'Content-Type' : 'text/html;charset=utf-8'}
+                                }, (err, res, data) => {
+                                    if (err) {
+                                        console.log('Error:', err);
+                                    } else if (res.statusCode !== 200) {
+                                        console.log('Status:', res.statusCode);
+                                    } else {
+                                        // data is already parsed as JSON:
+                                        console.log(data);
+                                    }
+                                })
+
                             }
                         }
                             
                     });
-                    console.log(`count: ${count}`);
 
                     return originalres.status(200).json({
                                 message: data
