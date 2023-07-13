@@ -1,4 +1,5 @@
 const express = require('express');
+const cheerio = require('cheerio');
 // const axios = require('axios');
 // // const https = require('node:https');
 // var https = require('https');
@@ -37,24 +38,54 @@ app.get('/getData', (req, originalres) => {
             originalres.send("received");
             agents = data.results.professionals;
 
+            console.log(agents.length);
+
             for (var i=0; i< agents.length; i++){
                 var group = {};
                 group.name = agents[i].fullName;
 
-                request.get({
-                    url: 'https://www.zillow.com/' + agents[i].profileLink,
-                    json: true,
-                    headers: { 'User-Agent': 'Cielo' +  Date.now() , 'Content-Type' : 'text/html;charset=utf-8'}
-                }, (err, res, data) => {
-                    if (err) {
-                        console.log('Error:', err);
-                    } else if (res.statusCode !== 200) {
-                        console.log('Status:', res.statusCode);
-                    } else {
-                    }
-                })
+                console.log('https://www.zillow.com/' + agents[i].profileLink);
 
             }
+
+            request.get({
+                url: 'https://www.zillow.com//profile/Ehren-Alessi-CEO/',
+                json: true,
+                headers: { 'User-Agent': 'Cielo' +  Date.now() , 'Content-Type' : 'text/html;charset=utf-8'}
+            }, (err, res, data) => {
+                if (err) {
+                    console.log('Error:', err);
+                } else if (res.statusCode !== 200) {
+                    console.log('Status:', res.statusCode);
+                } else {
+                    // data is already parsed as JSON:
+                    console.log(data);
+                    const $ = cheerio.load(data);
+                    console.log($);
+                    const sectionTag = $('section[class*="CardSection"]');
+                   
+                    const searchString = 'StyledTextButton';
+                    const anchorTags = sectionTag.find('a');
+                    let count = 0;
+                    anchorTags.each((index, element) => {
+                        const href = $(element).attr('href');
+                        if($(element)[0].nextSibling && $(element)[0].nextSibling.children) {
+                            let siblingsLength = $(element)[0].nextSibling.children.length;
+
+                            if(siblingsLength === 3 || siblingsLength === 2) {
+                                console.log(href);
+                                count++;
+                            }
+                        }
+                            
+                    });
+                    console.log(`count: ${count}`);
+
+                    return originalres.status(200).json({
+                                message: data
+                            })
+                }
+            })
 
         }
     });
@@ -174,7 +205,7 @@ async function getVisual() {
 	}
 }
 
-getVisual()
+// getVisual()
 
 
 app.listen(9999, () => {
