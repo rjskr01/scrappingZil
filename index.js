@@ -129,7 +129,7 @@ const puppeteer = require('puppeteer')
 async function getVisual() {
 	try {
 		const URL = 'https://www.zillow.com/profile/Ehren-Alessi-CEO?'+ Date.now();
-		const browser = await puppeteer.launch({headless : true})
+		const browser = await puppeteer.launch({headless : false})
 
 		const page = await browser.newPage()
 		await page.goto(URL);
@@ -149,12 +149,24 @@ async function getVisual() {
         //     //     browser.close();})
         //     //     console.log(vari);
         // })
-
-        const element = await page.$('a[href*="profile"]');
-        console.log(element);
-
+        // const keywords = await page.$$eval(
+        //     '.jcpIjO',
+        //     function(divs){
+        //         console.log(divs);
+        //     },
+        //   );
+        // await console.log(keywords);
+        // const element = await page.$('a[href*="profile"]');
+        // const as = await page.$$("a").then(function(values) {
+        //     console.log("asvalues:     " + values);
+        // });
+        // await console.log("as:     " + as);
+       
 		await page.screenshot({ path: 'screenshot.png' })
 		await page.pdf({ path: 'page.pdf' })
+        const b = (await page.$x("//a[@class='StyledTextButton-c11n-8-91-4__sc-1nwmfqo-0 jcpIjO']"))[0]
+        console.log(await b);
+        await b.click();
 
 		
 	} catch (error) {
